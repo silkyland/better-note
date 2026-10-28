@@ -5,10 +5,12 @@ A native macOS notebook for a little room to think. Built with SwiftUI and AppKi
 - Bundle identifier: `com.devded.betternote`
 - macOS 14 or newer; Xcode with Swift 6 for development
 - Native rich-text editor with undo/redo, spelling, smart quotes, headings, bold, italic, and highlights
+- Notion-style typing: markdown shortcuts (`#`, `-`, `[]`, `>`, `**`, `*`, `` ` ``, `~~`, links) render as you type, and Enter continues bullet/checklist/numbered lists
 - Notebooks, tags, pinned notes, search, two sort orders, and a recoverable Trash
 - Focus mode with retained editor undo history
 - System, light, and dark appearance from View → Appearance
-- UTF-8 text/Markdown and RTF import; text and RTF export
+- UTF-8 text, rendered Markdown, and RTF import; text, Markdown, and RTF export; copy as Markdown
+- GitHub-release update checks (BetterNote → Check for Updates…, plus a quiet daily check)
 - Automatic local saving, word/character counts, and a save-failure warning
 
 ## Run
@@ -39,7 +41,7 @@ The build script creates a locally ad-hoc-signed app. This is a local developmen
 | ⌘Delete | Move the selected note to Trash |
 | ⌘Z / ⇧⌘Z | Undo / redo |
 
-Select text before applying a heading or highlight. Checklist markers are text, toggled with the toolbar or ⇧⌘K. Add tags from the editor, remove them with their context menu, and move notes using the notebook menu above the editor. Trash notes are read-only until restored. Permanent deletion asks for confirmation.
+Select text before applying a heading or highlight — or just type markdown: `# ` for a heading, `- ` for a bullet, `[] ` for a checklist item, `> ` for a quote, and `**bold**`, `*italic*`, `` `code` ``, `~~strike~~` inline. Enter continues a list; Enter on an empty item or Backspace right after a marker exits it. Checklist items toggle with ⇧⌘K. Add tags from the editor, remove them with their context menu, and move notes using the notebook menu above the editor. Trash notes are read-only until restored. Permanent deletion asks for confirmation.
 
 ## Data and recovery
 
@@ -47,7 +49,7 @@ Notes live in `~/Library/Application Support/com.devded.betternote/library.json`
 
 Back up this directory with Time Machine or copy it while the app is closed. Atomic saving prevents partial writes; it is not a version-history backup. To roll back an app build, keep this directory, replace the `.app`, and reopen it. No migration or network service is involved.
 
-The first launch creates five example notes. Notes remain local; this build has no iCloud sync, attachments, encryption, or collaboration. Imported Markdown remains editable source text rather than rendered Markdown. Keep the application-support directory when removing the app if you want to preserve your notes.
+The first launch creates five example notes. Notes remain local; this build has no iCloud sync, attachments, encryption, or collaboration. Imported Markdown is rendered to rich text; use Export → Markdown or Copy as Markdown to get the source back. Keep the application-support directory when removing the app if you want to preserve your notes.
 
 ## Verification
 
