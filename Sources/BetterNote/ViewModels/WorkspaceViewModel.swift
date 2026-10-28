@@ -138,6 +138,26 @@ final class WorkspaceViewModel {
         scheduleSave()
     }
 
+    /// Shift+Delete: permanently removes the selected note even when it is
+    /// not in Trash yet — the confirmation dialog is the caller's job.
+    func permanentlyDeleteSelectedAnyway() {
+        guard canWrite, let note = selectedNote else { return }
+        library.notes.removeAll { $0.id == note.id }
+        selectedID = visibleNotes.first?.id
+        scheduleSave()
+    }
+
+    func emptyTrash() {
+        guard canWrite else { return }
+        library.notes.removeAll { $0.isTrashed }
+        if selectedNote == nil || selectedNote?.isTrashed == true {
+            selectedID = visibleNotes.first?.id
+        }
+        scheduleSave()
+    }
+
+    var trashedCount: Int { library.notes.filter(\.isTrashed).count }
+
     func duplicateSelected() {
         guard canWrite, var note = selectedNote, !note.isTrashed else { return }
         note.id = UUID()

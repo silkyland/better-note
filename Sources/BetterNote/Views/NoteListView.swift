@@ -3,6 +3,9 @@ import SwiftUI
 struct NoteListView: View {
     @Bindable var workspace: WorkspaceViewModel
     @FocusState private var searchFocused: Bool
+    @FocusState private var listFocused: Bool
+    @State private var confirmingPermanentDelete = false
+    @State private var confirmingEmptyTrash = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -27,6 +30,11 @@ struct NoteListView: View {
             HStack {
                 Text(workspace.sortNewestFirst ? "LAST EDITED" : "TITLE").font(.system(size: 9, weight: .semibold)).tracking(1.2).foregroundStyle(.secondary)
                 Spacer()
+                if workspace.scope == .trash {
+                    Button("Empty Trash…") { confirmingEmptyTrash = true }
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.red).buttonStyle(.plain)
+                        .disabled(workspace.trashedCount == 0).accessibilityLabel("Empty Trash")
+                }
                 Menu {
                     Button("Last edited") { workspace.sortNewestFirst = true }
                     Button("Title A–Z") { workspace.sortNewestFirst = false }
@@ -45,6 +53,18 @@ struct NoteListView: View {
                             }
                         }.padding(.horizontal, 12).padding(.bottom, 12)
                     }.onChange(of: workspace.selectedID) { _, id in if let id { proxy.scrollTo(id) } }
+                        .focusable().focused($listFocused)
+                        .onKeyPress(keys: [.delete, .deleteForward]) { press in
+                            guard let note = workspace.selectedNote else { return .ignored }
+                            if press.modifiers.contains(.shift) {
+                                confirmingPermanentDelete = true
+                            } else if !note.isTrashed {
+                                workspace.trashSelected()
+                            } else {
+                                return .ignored
+                            }
+                            return .handled
+                        }
                 }
             }
             HStack {
@@ -59,11 +79,19 @@ struct NoteListView: View {
             .onAppear {
                 if workspace.isSearchRequested { searchFocused = true; workspace.isSearchRequested = false }
             }
+            .alert("Delete this note permanently?", isPresented: $confirmingPermanentDelete) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete permanently", role: .destructive, action: workspace.permanentlyDeleteSelectedAnyway)
+            } message: { Text("“\(workspace.selectedNote?.displayTitle ?? "This note")” will be removed from this Mac. This cannot be undone.") }
+            .alert("Empty Trash?", isPresented: $confirmingEmptyTrash) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete all", role: .destructive, action: workspace.emptyTrash)
+            } message: { Text("\(workspace.trashedCount) note(s) will be permanently removed. This cannot be undone.") }
     }
 
     private func noteCard(_ note: Note) -> some View {
         let selected = workspace.selectedID == note.id
-        return Button { workspace.selectedID = note.id } label: {
+        return Button { workspace.selectedID = note.id; listFocused = true } label: {
             VStack(alignment: .leading, spacing: 9) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(note.displayTitle).font(.system(size: 14, weight: .semibold)).lineLimit(2)
