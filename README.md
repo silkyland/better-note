@@ -1,30 +1,46 @@
 # BetterNote
 
-A native macOS notebook for a little room to think. Built with SwiftUI and AppKit, without a web view or third-party runtime.
+**A little room to think.** A native macOS notebook built with SwiftUI and AppKit — no web view, no third-party runtime.
 
-- Bundle identifier: `com.devded.betternote`
-- macOS 14 or newer; Xcode with Swift 6 for development
-- Native rich-text editor with undo/redo, spelling, smart quotes, headings, bold, italic, and highlights
-- Notion-style typing: markdown shortcuts (`#`, `-`, `[]`, `>`, `**`, `*`, `` ` ``, `~~`, links) render as you type, and Enter continues bullet/checklist/numbered lists
-- Notebooks, tags, pinned notes, search, two sort orders, and a recoverable Trash
-- Focus mode with retained editor undo history
-- System, light, and dark appearance from View → Appearance
-- UTF-8 text, rendered Markdown, and RTF import; text, Markdown, and RTF export; copy as Markdown
-- GitHub-release update checks (BetterNote → Check for Updates…, plus a quiet daily check)
-- Automatic local saving, word/character counts, and a save-failure warning
+[![Release](https://img.shields.io/github/v/release/silkyland/better-note?include_prereleases)](https://github.com/silkyland/better-note/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey)](https://github.com/silkyland/better-note)
+[![Swift](https://img.shields.io/badge/swift-6-orange)](https://swift.org)
 
-## Run
+## Download
 
-The installed app is `/Applications/BetterNote.app`. Build products live under `build.noindex` so they do not appear beside the installed app in Spotlight/Finder search.
+Grab the latest build from [GitHub Releases](https://github.com/silkyland/better-note/releases), unzip, and move `BetterNote.app` to `/Applications`.
 
-Open `BetterNote.xcodeproj` in Xcode, choose BetterNote, and run. A generated Xcode project is included, so XcodeGen is optional unless changing `project.yml`.
+The app is ad-hoc signed, so on first launch macOS will ask you to confirm — right-click → **Open**, or allow it in System Settings → Privacy & Security. BetterNote checks GitHub releases for new versions once a day and via **BetterNote → Check for Updates…**.
 
-```sh
-./scripts/build.sh
-open build.noindex/Build/Products/Release/BetterNote.app
-```
+## Features
 
-The build script creates a locally ad-hoc-signed app. This is a local development build; App Store distribution and notarization require your Apple Developer signing configuration. The supplied Release app is a Universal binary for Apple Silicon and Intel; it requires macOS 14 or newer.
+- **Notion-style editor** — markdown renders as you type; Enter continues lists, Backspace removes markers
+- **Native rich text** — undo/redo, spell checking, smart quotes, headings, bold, italic, highlights, inline code, links
+- **Organize** — notebooks, tags, pinned notes, search, two sort orders, recoverable Trash
+- **Focus mode** — hides everything but the page, keeps full undo history
+- **Import/export** — text, Markdown (rendered), and RTF in; text, Markdown, and RTF out; copy as Markdown
+- **Private by default** — automatic local saving to one JSON file, no account, no network calls except update checks
+- System, light, and dark appearance (View → Appearance); word and character counts
+
+## Writing
+
+BetterNote is a WYSIWYG editor — there is no raw mode, formatted text is the document. Type markdown and it converts live:
+
+| You type | You get |
+| --- | --- |
+| `#` + space | Heading 1 (`##`, `###` for smaller) |
+| `-`, `*`, `+` + space | Bullet list |
+| `[]` or `[ ]` + space | Checklist item |
+| `1.` + space | Numbered list (auto-increments) |
+| `>` + space | Block quote |
+| `**text**`, `__text__` | **Bold** |
+| `*text*`, `_text_` | *Italic* |
+| `` `text` `` | `Inline code` |
+| `~~text~~` | ~~Strikethrough~~ |
+| `[text](url)` | Link |
+
+**Enter** inside a list continues it (and splits the item if the caret is mid-line). **Enter** on an empty item, or **Backspace** right after a marker, exits the list. **Enter** at the end of a heading returns to body text. **Return** in the title jumps into the body.
 
 ## Keyboard shortcuts
 
@@ -41,25 +57,38 @@ The build script creates a locally ad-hoc-signed app. This is a local developmen
 | ⌘Delete | Move the selected note to Trash |
 | ⌘Z / ⇧⌘Z | Undo / redo |
 
-Select text before applying a heading or highlight — or just type markdown: `# ` for a heading, `- ` for a bullet, `[] ` for a checklist item, `> ` for a quote, and `**bold**`, `*italic*`, `` `code` ``, `~~strike~~` inline. Enter continues a list; Enter on an empty item or Backspace right after a marker exits it. Checklist items toggle with ⇧⌘K. Add tags from the editor, remove them with their context menu, and move notes using the notebook menu above the editor. Trash notes are read-only until restored. Permanent deletion asks for confirmation.
+## Build from source
 
-## Data and recovery
+Requires macOS 14+ and Xcode with Swift 6. XcodeGen is optional — a generated `BetterNote.xcodeproj` is committed; regenerate it with `xcodegen` only when `project.yml` changes.
 
-Notes live in `~/Library/Application Support/com.devded.betternote/library.json`. RTF and plain text are stored together in a versioned JSON library. Saves are debounced by 400 ms and written atomically; app deactivation and quitting flush pending changes. If saving fails, the changes stay in memory and quitting offers to keep the app open. A corrupt, incompatible, or structurally invalid library is preserved and saving is disabled.
+```sh
+./scripts/build.sh
+open build.noindex/Build/Products/Release/BetterNote.app
+```
 
-Back up this directory with Time Machine or copy it while the app is closed. Atomic saving prevents partial writes; it is not a version-history backup. To roll back an app build, keep this directory, replace the `.app`, and reopen it. No migration or network service is involved.
+Build products live under `build.noindex` so they stay out of Spotlight/Finder search. The script produces a locally ad-hoc-signed Universal binary (Apple Silicon + Intel); App Store distribution and notarization need your own Apple Developer signing.
 
-The first launch creates five example notes. Notes remain local; this build has no iCloud sync, attachments, encryption, or collaboration. Imported Markdown is rendered to rich text; use Export → Markdown or Copy as Markdown to get the source back. Keep the application-support directory when removing the app if you want to preserve your notes.
-
-## Verification
+### Tests
 
 ```sh
 xcodebuild -project BetterNote.xcodeproj -scheme BetterNote \
   -configuration Debug -derivedDataPath build.noindex test CODE_SIGNING_ALLOWED=NO
 ```
 
-Swift Testing covers rich-text persistence, tag normalization, filtering, notebook context, Trash restoration/deletion, preservation of a corrupt library, failed-save recovery, selected-text formatting, checklist toggling, read-only editing, and formatting undo after reattaching the editor for Focus mode. Tests use isolated temporary libraries.
+Swift Testing covers the editor's typing behaviors (list continuation, markdown triggers, inline formatting), rich-text persistence, tag normalization, filtering, Trash, save-failure recovery, and undo across Focus-mode transitions.
+
+## Data and recovery
+
+Notes live in `~/Library/Application Support/com.devded.betternote/library.json` — RTF and plain text in one versioned JSON file. Saves are debounced (400 ms) and atomic; deactivation and quit flush pending changes. A failed save keeps changes in memory and quitting offers to keep the app open; a corrupt or incompatible library is preserved and saving is disabled.
+
+Back up the directory with Time Machine or copy it while the app is closed. Atomic saving prevents partial writes but is not version history. To roll back an app build, keep the directory, replace the `.app`, and reopen.
 
 ## App icon
 
-The icon uses a terracotta textured-paper tile and an ivory folded note silhouette, inspired by the visual style of Gitzly. It was generated with built-in imagegen and packaged into all ten standard macOS icon assets, including the 1024px master. The app bundles `BetterNote.icns` directly, matching Gitzly’s packaging and using a full-bleed opaque background that macOS masks to its icon shape without a white background plate. To regenerate asset sizes from another square PNG, run `./scripts/update-icon.sh /path/to/master.png`.
+The icon uses a terracotta textured-paper tile and an ivory folded note silhouette, inspired by the visual style of Gitzly. It is generated for all ten standard macOS sizes plus a bundled `BetterNote.icns`. Regenerate from a square master PNG with `./scripts/update-icon.sh /path/to/master.png`.
+
+## License
+
+[MIT](LICENSE) © 2026 Bundit Nuntates — [devded.com](https://devded.com)
+
+If BetterNote is useful, you can [buy the author a coffee](https://paypal.me/nuntates).
