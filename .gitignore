@@ -1,0 +1,8 @@
+.build/
+build.noindex/
+build/
+build.noindex/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
